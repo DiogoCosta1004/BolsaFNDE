@@ -1,18 +1,14 @@
-# Bolsa FNDE — site estático
+# Bolsa FNDE — GitHub Pages + Cloudflare Worker
 
-Projeto independente em HTML, CSS e JavaScript, baseado na lógica de consulta encontrada no APK de 2016.
+Site estático HTML/CSS/JS. O frontend chama o Worker em https://bolsa-fnde-api.diogocosta.workers.dev; o Worker encaminha requisições à API antiga do FNDE.
 
-## Publicar no GitHub Pages
+## Publicar
 
-1. Crie um repositório no GitHub.
-2. Envie **os arquivos desta pasta diretamente para a raiz do repositório**.
-3. Em **Settings > Pages > Build and deployment**, escolha **Deploy from a branch**, branch `main` e pasta `/(root)`.
-4. Aguarde o link do GitHub Pages aparecer na tela de Pages.
-5. No Safari do iPhone, abra o endereço e use **Compartilhar > Adicionar à Tela de Início**.
+Envie os arquivos desta pasta **diretamente para a raiz** do repositório GitHub Pages (não a pasta externa). Aguarde a publicação e faça atualização completa da página.
+
+## Rotas usadas
+- `GET /pessoa?cpf=XXXXXXXXXXX`
+- `GET /pagamento?hash=...`
 
 ## Limitações
-
-- Os endpoints `https://www.fnde.gov.br/digef/rs/spba/publica/pessoa/1/10/{cpf}` e `/pagamento/{hash}` foram extraídos do APK antigo e **não foram validados em produção**.
-- O GitHub Pages não executa backend nem proxy. Se o servidor FNDE não permitir CORS, a consulta falhará mesmo que o site carregue corretamente.
-- Não armazena CPFs, nomes ou resultados em localStorage, cookies ou cache do service worker. O service worker guarda apenas arquivos estáticos locais.
-- Não é um serviço oficial do Governo Federal. Evite inserir CPFs de terceiros sem base legal/autorização.
+O sucesso de `GET /` no Worker comprova apenas que o Worker está online, não que o FNDE responde corretamente às rotas. O JSON legado pode exigir ajustes no parser. Não exponha CPF ou respostas reais em screenshots/logs, e considere requisitos de privacidade e uso do serviço.

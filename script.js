@@ -1,6 +1,6 @@
 'use strict';
-// Endpoints recuperados do APK original (2016). Não há garantia de disponibilidade ou CORS.
-const API_BASE = 'https://www.fnde.gov.br/digef/rs/spba/publica';
+// API intermediária (Cloudflare Worker). Não armazene CPFs em logs ou analytics.
+const API_BASE = 'https://bolsa-fnde-api.diogocosta.workers.dev';
 const form = document.querySelector('#form');
 const cpfInput = document.querySelector('#cpf');
 const submit = document.querySelector('#submit');
@@ -42,7 +42,7 @@ function flattenPayments(data) {
 }
 async function getJson(path) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12000);
+  const timeout = setTimeout(() => controller.abort(), 22000);
   try {
     const response = await fetch(`${API_BASE}${path}`, { signal: controller.signal, headers: { Accept: 'application/json' } });
     if (!response.ok) throw new Error(`Serviço retornou HTTP ${response.status}.`);
@@ -80,15 +80,15 @@ form.addEventListener('submit', async event => {
   submit.disabled = true;
   showStatus('Consultando beneficiário no serviço do FNDE…');
   try {
-    const peopleData = await getJson(`/pessoa/1/10/${encodeURIComponent(cpf)}`);
+    const peopleData = await getJson(`/pessoa?cpf=${encodeURIComponent(cpf)}`);
     const person = peopleData?.pessoas?.[0];
     if (!person?.hash) { showStatus('Nenhum beneficiário foi encontrado ou o serviço não retornou um identificador.'); return; }
     showStatus('Beneficiário localizado. Buscando histórico de pagamentos…');
-    const paymentsData = await getJson(`/pagamento/${encodeURIComponent(person.hash)}`);
+    const paymentsData = await getJson(`/pagamento?hash=${encodeURIComponent(person.hash)}`);
     render(person.nome, paymentsData);
     statusBox.hidden = true;
   } catch (error) {
-    const detail = error.name === 'AbortError' ? 'A consulta excedeu o tempo limite.' : 'O endpoint antigo pode estar indisponível ou bloquear requisições do navegador (CORS).';
+    const detail = error.name === 'AbortError' ? 'A consulta excedeu o tempo limite.' : `A API não retornou os dados esperados (${error.message || 'erro de rede'}). Verifique se o Worker consegue acessar o FNDE.`;
     showStatus(`Não foi possível concluir a consulta. ${detail} Nenhum resultado foi confirmado.`, true);
     console.warn('Falha na consulta FNDE:', error);
   } finally { submit.disabled = false; }
